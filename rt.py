@@ -149,6 +149,18 @@ def getObstacle(current_position, move_vector, obstacle_radius = 1.0):
           obstacles_in_the_way.append(obstacle)
   return obstacles_in_the_way
 
+def getLineTo(a, b):
+	return getVector(a, b)
+
+def getSamplePosition(current_position, goal, a = 0.1, b = 0.5):
+	Pr = random.random()
+	sample_position = []
+	if Pr > 1 - a:
+		sample_position = getLineTo(current_position, goal)
+	elif Pr <= (1 - a) / b:
+		sample_position[X] = random.uniform(current_position[X], goal[X])
+		sample_position[Y] = random.uniform(current_position[Y], goal[Y])
+
 if getVectorProjection([3.0, -8.0], [1.0, 2.0]) != [-2.6, -5.2]:
   raise Exception("Error")
 
