@@ -7,13 +7,10 @@ X = 0
 Y = 1
 
 def isPointInSegment(pv1, pv2, point):
-  if isColinear(pv1, pv2, point):
-    v1 = getVector(pv2, pv1)
-    v2 = getVector(point, pv1)
-    dot_product = getDotProduct(v1, v2)
-    if dot_product <= getSquaredLength(v1):
-      return True
-  return False
+  return isColinear(pv1, pv2, point) and isPointContainedInRange(pv1, point, pv2)
+
+def isPointContainedInRange(p1, p2, p3):
+  return p1 <= p2 <= p3 or p3 <= p2 <= p1
 
 #def getObstaclesInRange(vector, origin, space):
 #  obstacles = []
