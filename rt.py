@@ -10,7 +10,7 @@ def isPointInSegment(pv1, pv2, point):
   return isColinear(pv1, pv2, point) and isPointContainedInRange(pv1, point, pv2)
 
 def isPointContainedInRange(p1, p2, p3):
-  return p1 <= p2 <= p3 or p3 <= p2 <= p1
+  return p1 != p3 and (p1 <= p2 <= p3 or p3 <= p2 <= p1)
 
 #def getObstaclesInRange(vector, origin, space):
 #  obstacles = []
