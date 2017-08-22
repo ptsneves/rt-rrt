@@ -122,63 +122,66 @@ printSpace(space)
 
 #https://stackoverflow.com/a/1079478/227990
 def getObstacle(current_position, move_vector, obstacle_radius = 1.0):
-	obstacles_in_the_way = []
-	for obstacle in obstacles:
-		a = current_position
-		c = obstacle
-		AB = move_vector
-		AC = getVector(a, obstacle)
+  obstacles_in_the_way = []
+  for obstacle in obstacles:
+    a = current_position
+    c = obstacle
+    AB = move_vector
+    AC = getVector(a, obstacle)
 
-		#if distance from origin to radius is already in the circle, its a match
-		if getVectorNorm(AC) < obstacle_radius:
-			obstacles_in_the_way.append(obstacle)
-		else:
-			AD = getVectorProjection(AC, AB)
+    #if distance from origin to radius is already in the circle, its a match
+    if getVectorNorm(AC) < obstacle_radius:
+      obstacles_in_the_way.append(obstacle)
+    else:
+      AD = getVectorProjection(AC, AB)
 
-			#if the projection is null then point a = d
-			#the projection may be null if c is perpendicular to AB passing through a
-			#Distance still needs to be checked because it can be perpendicular but out
-			#outside radius
-			d = getProjectedPoint(a, AD)
+      #if the projection is null then point a = d
+      #the projection may be null if c is perpendicular to AB passing through a
+      #Distance still needs to be checked because it can be perpendicular but out
+      #outside radius
+      d = getProjectedPoint(a, AD)
 
-			#if the projected point is not inside the segment AB then distance
-			#check is not valid.
-			if isPointInSegment(a, getProjectedPoint(a, AB), d):
-				distance = getVectorNorm(getVector(d, c))
-				if distance < obstacle_radius:
-					obstacles_in_the_way.append(obstacle)
-	return obstacles_in_the_way
+      #if the projected point is not inside the segment AB then distance
+      #check is not valid.
+      if isPointInSegment(a, getProjectedPoint(a, AB), d):
+        distance = getVectorNorm(getVector(d, c))
+        if distance < obstacle_radius:
+          obstacles_in_the_way.append(obstacle)
+  return obstacles_in_the_way
 
 if getVectorProjection([3.0, -8.0], [1.0, 2.0]) != [-2.6, -5.2]:
   raise Exception("Error")
 
-if isColinear([1,1], [2,2], [3,3]) == False:
+if not isColinear([1,1], [2,2], [3,3]):
   raise Exception("Error")
 
-if isColinear([1,0.9], [2,2], [3,3]) == True:
+if isColinear([1,0.9], [2,2], [3,3]):
   raise Exception("Error")
 
-if isPointInSegment([1,1], [3,3], [2,2]) == False:
+if isPointInSegment([1.0, 1.0], [1.0, 1.0], [2.0, 2.0]):
   raise Exception("Error")
 
-if isPointInSegment([1,1], [2,2], [3,3]) == True:
+if not isPointInSegment([1,1], [3,3], [2,2]):
   raise Exception("Error")
 
-if isPointInSegment([1,1], [2,2], [2,2]) == False:
+if isPointInSegment([1,1], [2,2], [3,3]):
+  raise Exception("Error")
+
+if not isPointInSegment([1,1], [2,2], [2,2]):
   raise Exception("Error")
 
 if isPointInSegment([1.0, 0.0], [-4.0, 0.0], [5.0, 0.0]):
-	raise Exception("Error")
+  raise Exception("Error")
 
 if getObstacle([1.0, 0.0], [-5.0, 0.0]) != [[0.0, 0.0], [1.0, 0.0]]:
-	raise Exception("Error")
+  raise Exception("Error")
 
 if getObstacle([6.0, 1.0], [-5.0, 0.0]):
-	raise Exception("Error")
+  raise Exception("Error")
 
 if getObstacle([0.0, 0.0], [0.0, -1.0]) != [[0.0, 0.0]]:
-	raise Exception("Error")
+  raise Exception("Error")
 
 if getObstacle([0.0, 1.0], [0.0, -1.0]) != [[0.0, 0.0], [0.0, 1.0]]:
-	raise Exception("Error")
+  raise Exception("Error")
 
