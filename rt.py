@@ -6,6 +6,13 @@ import math
 X = 0
 Y = 1
 
+DISTANCE = 0
+NODE = 1
+
+#NODE
+POSITION = 0
+PARENT = 1
+COST = 2
 def isPointInSegment(pv1, pv2, point):
   return isColinear(pv1, pv2, point) and isPointContainedInRange(pv1, point, pv2)
 
@@ -121,7 +128,7 @@ print(obstacles)
 printSpace(space)
 
 #https://stackoverflow.com/a/1079478/227990
-def getObstacle(current_position, move_vector, obstacle_radius = 1.0):
+def getObstacle(obstacles, current_position, move_vector, obstacle_radius = 1.0):
   obstacles_in_the_way = []
   for obstacle in obstacles:
     a = current_position
@@ -149,6 +156,9 @@ def getObstacle(current_position, move_vector, obstacle_radius = 1.0):
           obstacles_in_the_way.append(obstacle)
   return obstacles_in_the_way
 
+def hasNoObstacle(obstacle, current_position, move_vector, obstacle_radius = 1.0):
+  return len(getObstacle(obstacle, current_position, move_vector, obstacle_radius)) == 0
+
 def getLineTo(a, b):
   return getVector(a, b)
 
@@ -169,7 +179,92 @@ def getSamplePosition(current_position, goal, a = 0.1, b = 0.5):
 
   return sample_position
 
-print(getSamplePosition([3.0, 1.0], [10.0, 10.0]))
+def getNodeDistance(node1, node2):
+  return getVectorProjection(getVector(node1, node2))
+
+def getNodesFromGrid(X_SI, node):
+  return X_SI[math.floor(node[X])][math.floor(node[Y])]
+
+def addNodeToGrid(X_SI, node):
+  X_SI[math.floor(node[X])][math.floor(node[Y])].append(node)
+
+#closest nodes cannot be empty no checking is done
+def getClosestNode(position, closest_nodes):
+  smallest_distance = getNodeDistance(position, closest_node[0][POSITION])
+  closest_node = closest_nodes[0]
+
+  if len(closest_nodes) > 1:
+    for node in closest_nodes[1:]:
+      distance = getNodeDistance(position, node[POSITION])
+      if distance < smallest_distance:
+        closest_node = node
+        smallest_distance = distance
+
+  ret_val[NODE] = closest_node
+  ret_val[DISTANCE] = smallest_distance
+  return ret_val
+
+def getCost(x_parent, x_new):
+  return x_parent[COST] + getVectorNorm(getVector(x_parent[POSITION], x_new))
+
+def addNodeToTree(obstacles, x_new, x_closest, X_near):
+  x_min = x_closest
+  c_min = getCost(x_closest, x_new)
+  if len(X_near) > 1:
+    for x in X_near[1:]:
+      c_new = getCost(x, x_new)
+      if c_new < c_min and hasNoObstacle(obstacles, x[POSITION], x_new[POSITION]):
+        x_min = x
+        c_min = c_new
+  x_new[PARENT] = x_min
+
+def rewireFromRoot(obstacles, x0, qs, X_SI):
+  if len(qs) == 0:
+    qs.append(x0)
+  while len(qd) != 0:
+    x_s = qs.pop(0)
+    X_near = getNodesFromGrid(X_SI, x_s)
+    for x_near in X_near:
+      c_old = x_near[COST]
+      c_new = getCost(x_s, x_near)
+      if c_new < c_old and hasNoObstacle(obstacles, x_s[POSITION], x_near[POSITION]):
+        x_near[PARENT] = x_s
+
+def rewireRandomNode(obstacles, qr, X_SI):
+  while len(qr) != 0:
+    x_r = qr.pop(0)
+    X_near = getNodesFromGrid(X_SI, x_r)
+    for x_near in X_near:
+      c_old = x_near[COST]
+      c_new = getCost(x_r, x_near)
+      if c_new < c_old and hasNoObstacle(obstacles, x_r[POSITION], x_near[POSITION]):
+          x_near[PARENT] = x_r
+          qr.append(x_near)
+
+def algorithm2(obstacles, X_SI, qr, qs, kmax, rs):
+  x_0 = [3.0, 1.0]
+  goal = [10, 10]
+
+  x_rand[POSITION] = getSamplePosition(x_0, goal)
+  x_rand[COST] = float('nan')
+  x_rand[PARENT] = []
+
+  X_near = getNodesFromGrid(X_SI, x_0)
+  if len(X_near) != 0:
+    result = getClosestNode(x_0, X_near)
+    x_closest = result[NODE]
+    distance_closest = result[DISTANCE]
+    if hasNoObstacle(obstacles, x_closest[POSITION], x_rand[POSITION]):
+      if len(X_near) < k_max or distance_closest > rs:
+        addNoteToTree(obstacles, x_rand, x_closest, X_near, obstacles)
+        addNodeToGrid(X_SI, x_rand)
+        qr.append(0, x_rand)
+      else:
+        qr.append(0, x_closest[NODE])
+      rewireRandomNode(obstacles, qr, X_SI)
+  rewireFromRoot(obstacles, x_0, qs, X_SI)
+
+algorithm2([], [], [], [], 10.0, 1)
 
 if getVectorProjection([3.0, -8.0], [1.0, 2.0]) != [-2.6, -5.2]:
   raise Exception("Error")
