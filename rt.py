@@ -221,14 +221,19 @@ def addNodeToTree(obstacles, x_new, x_closest, X_near):
 def rewireFromRoot(obstacles, x0, qs, X_SI):
   if len(qs) == 0:
     qs.append(x0)
+
+  qs_popped = []
   while len(qd) != 0:
     x_s = qs.pop(0)
+    qs_popped.append(x_s)
     X_near = getNodesFromGrid(X_SI, x_s)
     for x_near in X_near:
       c_old = x_near[COST]
       c_new = getCost(x_s, x_near)
       if c_new < c_old and hasNoObstacle(obstacles, x_s[POSITION], x_near[POSITION]):
         x_near[PARENT] = x_s
+      if x_near not in qs_popped:
+        qs.append(x_near)
 
 def rewireRandomNode(obstacles, qr, X_SI):
   while len(qr) != 0:
@@ -241,7 +246,7 @@ def rewireRandomNode(obstacles, qr, X_SI):
           x_near[PARENT] = x_r
           qr.append(x_near)
 
-def algorithm2(obstacles, X_SI, qr, qs, kmax, rs):
+def algorithm2(x_0, x_goal, obstacles, X_SI, qr, qs, kmax, rs):
   x_0 = [3.0, 1.0]
   goal = [10, 10]
 
@@ -258,11 +263,17 @@ def algorithm2(obstacles, X_SI, qr, qs, kmax, rs):
       if len(X_near) < k_max or distance_closest > rs:
         addNoteToTree(obstacles, x_rand, x_closest, X_near, obstacles)
         addNodeToGrid(X_SI, x_rand)
-        qr.append(0, x_rand)
+        qr.insert(0, x_rand)
+        if getVectorNorm(getVector(x_rand, x_goal)) <= rs:
+          goal_node = x_rand
       else:
-        qr.append(0, x_closest[NODE])
+        qr.insert(0, x_closest[NODE])
       rewireRandomNode(obstacles, qr, X_SI)
   rewireFromRoot(obstacles, x_0, qs, X_SI)
+  return goal_node
+
+def algorithm6(x_0, x_goal):
+  
 
 algorithm2([], [], [], [], 10.0, 1)
 
