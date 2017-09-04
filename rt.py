@@ -165,7 +165,10 @@ def getLineTo(a, b):
 def getUniform(start, end):
     return random.uniform(end, start)
 
-def getSamplePosition(current_position, goal, a = 0.1, b = 0.5):
+def getSamplePosition(x_0, x_goal, a = 0.1, b = 0.5):
+  current_position = x_0[POSITION]
+  goal = x_goal[POSITION]
+
   Pr = random.random()
   sample_position = [0, 0]
   if Pr > 1 - a:
@@ -180,13 +183,16 @@ def getSamplePosition(current_position, goal, a = 0.1, b = 0.5):
   return sample_position
 
 def getNodeDistance(node1, node2):
-  return getVectorProjection(getVector(node1, node2))
+  return getVectorProjection(getVector(node1[POSITION], node2[POSITION]))
 
 def getNodesFromGrid(X_SI, node):
-  return X_SI[math.floor(node[X])][math.floor(node[Y])]
+  if X_SI:
+    return X_SI[math.floor(node[POSITION][X])][math.floor(node[POSITION][Y])]
+  else:
+    return []
 
 def addNodeToGrid(X_SI, node):
-  X_SI[math.floor(node[X])][math.floor(node[Y])].append(node)
+  X_SI[math.floor(node[POSITION][X])][math.floor(node[POSITION][Y])].append(node)
 
 #closest nodes cannot be empty no checking is done
 def getClosestNode(position, closest_nodes):
@@ -205,7 +211,7 @@ def getClosestNode(position, closest_nodes):
   return ret_val
 
 def getCost(x_parent, x_new):
-  return x_parent[COST] + getVectorNorm(getVector(x_parent[POSITION], x_new))
+  return x_parent[COST] + getNodeDistance(x_parent, x_new)
 
 def addNodeToTree(obstacles, x_new, x_closest, X_near):
   x_min = x_closest
@@ -247,9 +253,6 @@ def rewireRandomNode(obstacles, qr, X_SI):
           qr.append(x_near)
 
 def algorithm2(x_0, x_goal, obstacles, X_SI, qr, qs, kmax, rs):
-  x_0 = [3.0, 1.0]
-  goal = [10, 10]
-
   x_rand[POSITION] = getSamplePosition(x_0, goal)
   x_rand[COST] = float('nan')
   x_rand[PARENT] = []
@@ -259,23 +262,34 @@ def algorithm2(x_0, x_goal, obstacles, X_SI, qr, qs, kmax, rs):
     result = getClosestNode(x_0, X_near)
     x_closest = result[NODE]
     distance_closest = result[DISTANCE]
-    if hasNoObstacle(obstacles, x_closest[POSITION], x_rand[POSITION]):
-      if len(X_near) < k_max or distance_closest > rs:
-        addNoteToTree(obstacles, x_rand, x_closest, X_near, obstacles)
-        addNodeToGrid(X_SI, x_rand)
-        qr.insert(0, x_rand)
-        if getVectorNorm(getVector(x_rand, x_goal)) <= rs:
-          goal_node = x_rand
-      else:
-        qr.insert(0, x_closest[NODE])
-      rewireRandomNode(obstacles, qr, X_SI)
+  else:
+    x_closest = x_0
+    distance_closest = getNodeDistance(x_0, x_rand)
+
+  if hasNoObstacle(obstacles, x_closest[POSITION], x_rand[POSITION]):
+    if len(X_near) < k_max or distance_closest > rs:
+      addNoteToTree(obstacles, x_rand, x_closest, X_near, obstacles)
+      addNodeToGrid(X_SI, x_rand)
+      qr.insert(0, x_rand)
+      if getNodeDistance(x_rand, x_goal) <= rs:
+        goal_node = x_rand
+    else:
+      qr.insert(0, x_closest[NODE])
+    rewireRandomNode(obstacles, qr, X_SI)
   rewireFromRoot(obstacles, x_0, qs, X_SI)
   return goal_node
 
 def algorithm6(x_0, x_goal):
-  
 
-algorithm2([], [], [], [], 10.0, 1)
+x_goal[POSITION] = [10.0, 10.0]
+x_goal[COST] = 0
+x_goal[PARENT] = []
+
+x_0[POSITION] = [3.0, 1.0]
+x_0[COST] = getNodeDistance(x_goal, x_0)
+x_0[PARENT] = []
+
+algorithm2(x_0, x_goal, [], [], 10.0, 1)
 
 if getVectorProjection([3.0, -8.0], [1.0, 2.0]) != [-2.6, -5.2]:
   raise Exception("Error")
