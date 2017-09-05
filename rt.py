@@ -183,7 +183,7 @@ def getSamplePosition(x_0, x_goal, a = 0.1, b = 0.5):
   return sample_position
 
 def getNodeDistance(node1, node2):
-  return getVectorProjection(getVector(node1[POSITION], node2[POSITION]))
+  return getVectorNorm(getVector(node1[POSITION], node2[POSITION]))
 
 def getNodesFromGrid(X_SI, node):
   if X_SI:
@@ -223,6 +223,7 @@ def addNodeToTree(obstacles, x_new, x_closest, X_near):
         x_min = x
         c_min = c_new
   x_new[PARENT] = x_min
+  x_new[COST] = c_min
 
 def rewireFromRoot(obstacles, x0, qs, X_SI):
   if len(qs) == 0:
@@ -252,8 +253,9 @@ def rewireRandomNode(obstacles, qr, X_SI):
           x_near[PARENT] = x_r
           qr.append(x_near)
 
-def algorithm2(x_0, x_goal, obstacles, X_SI, qr, qs, kmax, rs):
-  x_rand[POSITION] = getSamplePosition(x_0, goal)
+def algorithm2(x_0, x_goal, obstacles, X_SI, qr, qs, k_max, rs):
+  x_rand = [[], 0.0, []]
+  x_rand[POSITION] = getSamplePosition(x_0, x_goal)
   x_rand[COST] = float('nan')
   x_rand[PARENT] = []
 
@@ -268,7 +270,7 @@ def algorithm2(x_0, x_goal, obstacles, X_SI, qr, qs, kmax, rs):
 
   if hasNoObstacle(obstacles, x_closest[POSITION], x_rand[POSITION]):
     if len(X_near) < k_max or distance_closest > rs:
-      addNoteToTree(obstacles, x_rand, x_closest, X_near, obstacles)
+      addNodeToTree(obstacles, x_rand, x_closest, X_near)
       addNodeToGrid(X_SI, x_rand)
       qr.insert(0, x_rand)
       if getNodeDistance(x_rand, x_goal) <= rs:
@@ -280,16 +282,23 @@ def algorithm2(x_0, x_goal, obstacles, X_SI, qr, qs, kmax, rs):
   return goal_node
 
 def algorithm6(x_0, x_goal):
+  x = x_goal
+  while x[PARENT] != []:
+    print(x[PARENT])
+    x = x[PARENT]
 
+x_goal = [[], 0.0, []]
 x_goal[POSITION] = [10.0, 10.0]
-x_goal[COST] = 0
+x_goal[COST] = 0.0
 x_goal[PARENT] = []
 
+x_0 = [[], 0.0, []]
 x_0[POSITION] = [3.0, 1.0]
 x_0[COST] = getNodeDistance(x_goal, x_0)
 x_0[PARENT] = []
 
-algorithm2(x_0, x_goal, [], [], 10.0, 1)
+x = algorithm2(x_0, x_goal, obstacles, [], [], [], 10.0, 1)
+algorithm6(x_0, x)
 
 if getVectorProjection([3.0, -8.0], [1.0, 2.0]) != [-2.6, -5.2]:
   raise Exception("Error")
