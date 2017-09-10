@@ -3,6 +3,8 @@
 import random
 import math
 
+import cairo
+
 X = 0
 Y = 1
 
@@ -13,6 +15,13 @@ NODE = 1
 POSITION = 0
 PARENT = 1
 COST = 2
+
+XDIM = 20
+YDIM = 20
+
+START_POSITION = [3.0, 1.0]
+END_POSITION = [15.0, 10.0]
+
 def isPointInSegment(pv1, pv2, point):
   return isColinear(pv1, pv2, point) and isPointContainedInRange(pv1, point, pv2)
 
@@ -63,20 +72,46 @@ def isColinear(point1, point2, point3):
   else:
     return False
 
+
+class Draw:
+  def __init__(self):
+    self.surface = cairo.SVGSurface("output.svg", XDIM*20, YDIM*20)
+    self.ctx = cairo.Context(self.surface)
+    self.ctx.set_source_rgb(0,0,0)
+    self.ctx.set_line_width(0.1)
+    self.ctx.scale(20, 20)
+
+  def drawLine(self, p1, p2 = [0.0, 0.0], finish = True):
+    self.ctx.move_to(p1[X], p1[Y])
+    self.ctx.line_to(p2[X], p2[Y])
+    if finish:
+      self.finishDrawing()
+
+  def drawNodes(self, node1, node2):
+    self.drawLine(node1[POSITION], node2[POSITION])
+
+  def drawObstacle(self, x, y):
+    self.ctx.move_to(x, y)
+    self.ctx.arc(x, y, 1/20, -math.pi, math.pi)
+
+  def finishDrawing(self):
+    self.ctx.stroke()
+    #self.ctx.scale(10, 10)
+
 def getVector(point1, point2):
   dx = point2[X] - point1[X]
   dy = point2[Y] - point1[Y]
   return [dx, dy]
 
-def generateSpace(xdim, ydim):
-  space = [[0] * xdim for x in range(ydim)]
-  for x in range(0, xdim):
-    for y in range(0, ydim):
-      if x == 0 or y == 0 or x == xdim-1 or y == ydim-1:
+def generateSpace(XDIM, YDIM, draw = None):
+  space = [[0] * XDIM for x in range(YDIM)]
+  for x in range(0, XDIM):
+    for y in range(0, YDIM):
+      if [x,y] != START_POSITION and [x,y] != END_POSITION and(  x == 0 or y == 0 or x == XDIM-1 or y == YDIM-1 or random.randint(1,6) == 2):
         space[x][y] = 1
-      #elif random.randint(1,6) == 2:
-      #  space[x][y] = 1
-
+        if draw:
+          draw.drawObstacle(x, y)
+  space[8][8] = 1
   return space
 
 def getDotProduct(vector1, vector2):
@@ -106,8 +141,8 @@ def getSquaredLength(v):
 
 def getObstaclesInRange(vector, origin, space):
   obstacles = []
-  for x in range(0, xdim):
-    for y in range(0, ydim):
+  for x in range(0, XDIM):
+    for y in range(0, YDIM):
       if space[x][y] == 1 and getVectorNorm(getVector(origin, [x, y])) < getVectorNorm(vector):
         obstacles.append([x, y])
   return obstacles
@@ -116,19 +151,8 @@ def printSpace(space):
   for row in space:
     print(row)
 
-xdim = 20
-ydim = 20
-origin = [1.0, 0.0]
-vector = [-5.0, 0.0]
-
-space = generateSpace(xdim, ydim)
-
-obstacles = getObstaclesInRange(vector, origin, space)
-print(obstacles)
-printSpace(space)
-
 #https://stackoverflow.com/a/1079478/227990
-def getObstacle(obstacles, current_position, move_vector, obstacle_radius = 1.0):
+def getObstacle(obstacles, current_position, move_vector, obstacle_radius = 10.0):
   obstacles_in_the_way = []
   for obstacle in obstacles:
     a = current_position
@@ -176,7 +200,6 @@ def getSamplePosition(x_0, x_goal, a = 0.1, b = 0.5):
     sample_position = getProjectedPoint(current_position, random_vector)
   #elif Pr <= (1 - a) / b:
   else:
-    print(current_position, goal)
     sample_position[X] = getUniform(current_position[X], goal[X])
     sample_position[Y] = getUniform(current_position[Y], goal[Y])
 
@@ -185,27 +208,47 @@ def getSamplePosition(x_0, x_goal, a = 0.1, b = 0.5):
 def getNodeDistance(node1, node2):
   return getVectorNorm(getVector(node1[POSITION], node2[POSITION]))
 
-def getNodesFromGrid(X_SI, node):
-  if X_SI:
-    return X_SI[math.floor(node[POSITION][X])][math.floor(node[POSITION][Y])]
-  else:
+class NodeGrid:
+
+  class GridElement:
+    def __init__(self, node):
+      self.x = math.floor(node[POSITION][X])
+      self.y = math.floor(node[POSITION][Y])
+      self.nodes = [node]
+
+    def containsNode(self, node):
+      return math.floor(node[POSITION][X]) == self.x and math.floor(node[POSITION][Y]) == self.y
+
+  def __init__(self):
+    self.grid_elements = []
+
+  def getNodesFromGrid(self, node):
+    for e in self.grid_elements:
+      if e.containsNode(node):
+        return e.nodes
     return []
 
-def addNodeToGrid(X_SI, node):
-  X_SI[math.floor(node[POSITION][X])][math.floor(node[POSITION][Y])].append(node)
+  def addNodeToGrid(self, node):
+    for e in self.grid_elements:
+      if e.containsNode(node):
+        e.nodes.append(node)
+        return
+    self.grid_elements.append(self.GridElement(node))
+
 
 #closest nodes cannot be empty no checking is done
 def getClosestNode(position, closest_nodes):
-  smallest_distance = getNodeDistance(position, closest_node[0][POSITION])
+  smallest_distance = getNodeDistance(position, closest_nodes[0])
   closest_node = closest_nodes[0]
 
   if len(closest_nodes) > 1:
     for node in closest_nodes[1:]:
-      distance = getNodeDistance(position, node[POSITION])
+      distance = getNodeDistance(position, node)
       if distance < smallest_distance:
         closest_node = node
         smallest_distance = distance
 
+  ret_val = [0,0]
   ret_val[NODE] = closest_node
   ret_val[DISTANCE] = smallest_distance
   return ret_val
@@ -230,10 +273,10 @@ def rewireFromRoot(obstacles, x0, qs, X_SI):
     qs.append(x0)
 
   qs_popped = []
-  while len(qd) != 0:
+  while len(qs) != 0:
     x_s = qs.pop(0)
     qs_popped.append(x_s)
-    X_near = getNodesFromGrid(X_SI, x_s)
+    X_near = X_SI.getNodesFromGrid(x_s)
     for x_near in X_near:
       c_old = x_near[COST]
       c_new = getCost(x_s, x_near)
@@ -245,7 +288,7 @@ def rewireFromRoot(obstacles, x0, qs, X_SI):
 def rewireRandomNode(obstacles, qr, X_SI):
   while len(qr) != 0:
     x_r = qr.pop(0)
-    X_near = getNodesFromGrid(X_SI, x_r)
+    X_near = X_SI.getNodesFromGrid(x_r)
     for x_near in X_near:
       c_old = x_near[COST]
       c_new = getCost(x_r, x_near)
@@ -253,13 +296,22 @@ def rewireRandomNode(obstacles, qr, X_SI):
           x_near[PARENT] = x_r
           qr.append(x_near)
 
-def algorithm2(x_0, x_goal, obstacles, X_SI, qr, qs, k_max, rs):
+def printNode(node):
+  if node[PARENT]:
+    print("POSITION {}\nCOST{}\nPARENT_POS {}\n".format(node[POSITION], node[COST], node[PARENT][POSITION]))
+  else:
+    print("ROOT: POSITION {}\nCOST{}\n".format(node[POSITION], node[COST]))
+
+def algorithm2(space, x_0, x_goal, X_SI, qr, qs, k_max, rs, draw = None):
+  new_node = x_0
+
   x_rand = [[], 0.0, []]
   x_rand[POSITION] = getSamplePosition(x_0, x_goal)
   x_rand[COST] = float('nan')
   x_rand[PARENT] = []
 
-  X_near = getNodesFromGrid(X_SI, x_0)
+
+  X_near = X_SI.getNodesFromGrid(x_0)
   if len(X_near) != 0:
     result = getClosestNode(x_0, X_near)
     x_closest = result[NODE]
@@ -268,18 +320,21 @@ def algorithm2(x_0, x_goal, obstacles, X_SI, qr, qs, k_max, rs):
     x_closest = x_0
     distance_closest = getNodeDistance(x_0, x_rand)
 
+  obstacles = getObstaclesInRange(getVector(x_0[POSITION], x_rand[POSITION]), x_0[POSITION], space)
   if hasNoObstacle(obstacles, x_closest[POSITION], x_rand[POSITION]):
     if len(X_near) < k_max or distance_closest > rs:
+      X_SI.addNodeToGrid(x_rand)
       addNodeToTree(obstacles, x_rand, x_closest, X_near)
-      addNodeToGrid(X_SI, x_rand)
+      printNode(x_rand)
+      if draw:
+        draw.drawNodes(x_rand[PARENT], x_rand)
       qr.insert(0, x_rand)
-      if getNodeDistance(x_rand, x_goal) <= rs:
-        goal_node = x_rand
+      new_node = x_rand
     else:
       qr.insert(0, x_closest[NODE])
     rewireRandomNode(obstacles, qr, X_SI)
-  rewireFromRoot(obstacles, x_0, qs, X_SI)
-  return goal_node
+    rewireFromRoot(obstacles, x_0, qs, X_SI)
+  return new_node
 
 def algorithm6(x_0, x_goal):
   x = x_goal
@@ -287,18 +342,33 @@ def algorithm6(x_0, x_goal):
     print(x[PARENT])
     x = x[PARENT]
 
+draw = Draw()
+space = generateSpace(XDIM, YDIM, draw)
+printSpace(space)
+
+
 x_goal = [[], 0.0, []]
-x_goal[POSITION] = [10.0, 10.0]
+x_goal[POSITION] = END_POSITION
 x_goal[COST] = 0.0
 x_goal[PARENT] = []
 
 x_0 = [[], 0.0, []]
-x_0[POSITION] = [3.0, 1.0]
+x_0[POSITION] = START_POSITION
 x_0[COST] = getNodeDistance(x_goal, x_0)
-x_0[PARENT] = []
+x_0[PARENT] = None
 
-x = algorithm2(x_0, x_goal, obstacles, [], [], [], 10.0, 1)
-algorithm6(x_0, x)
+X_SI = NodeGrid()
+X_SI.addNodeToGrid(x_0)
+
+x = x_0
+printNode(x)
+while getNodeDistance(x, x_goal) >= 1.0:
+  x = algorithm2(space, x, x_goal, X_SI, [], [], 10.0, 1.0, draw)
+
+
+
+print("Reached")
+#algorithm6(x_0, x)
 
 if getVectorProjection([3.0, -8.0], [1.0, 2.0]) != [-2.6, -5.2]:
   raise Exception("Error")
@@ -327,15 +397,15 @@ if not isPointInSegment([1,1], [2,2], [2,2]):
 if isPointInSegment([1.0, 0.0], [-4.0, 0.0], [5.0, 0.0]):
   raise Exception("Error")
 
-if getObstacle([1.0, 0.0], [-5.0, 0.0]) != [[0.0, 0.0], [1.0, 0.0]]:
-  raise Exception("Error")
-
-if getObstacle([6.0, 1.0], [-5.0, 0.0]):
-  raise Exception("Error")
-
-if getObstacle([0.0, 0.0], [0.0, -1.0]) != [[0.0, 0.0]]:
-  raise Exception("Error")
-
-if getObstacle([0.0, 1.0], [0.0, -1.0]) != [[0.0, 0.0], [0.0, 1.0]]:
-  raise Exception("Error")
-
+#if getObstacle(obstacles, [1.0, 0.0], [-5.0, 0.0]) != [[0.0, 0.0], [1.0, 0.0]]:
+#  raise Exception("Error")
+#
+#if getObstacle(obstacles, [6.0, 1.0], [-5.0, 0.0]):
+#  raise Exception("Error")
+#
+#if getObstacle(obstacles, [0.0, 0.0], [0.0, -1.0]) != [[0.0, 0.0]]:
+#  raise Exception("Error")
+#
+#if getObstacle(obstacles, [0.0, 1.0], [0.0, -1.0]) != [[0.0, 0.0], [0.0, 1.0]]:
+#  raise Exception("Error")
+#
