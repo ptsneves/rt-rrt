@@ -19,7 +19,7 @@ COST = 2
 XDIM = 20
 YDIM = 20
 
-START_POSITION = [3.0, 1.0]
+START_POSITION = [3.0, 3.0]
 END_POSITION = [15.0, 15.0]
 
 class Draw:
@@ -99,7 +99,7 @@ def getObstaclesInRange(vector, origin, space, all = False):
   obstacles = []
   for x in range(0, XDIM):
     for y in range(0, YDIM):
-      if space[x][y] == 1 and (all or getVectorNorm(getVector(origin, [x, y])) < getVectorNorm(vector)):
+      if space[x][y] == 1:# and (all or getVectorNorm(getVector(origin, [x, y])) < getVectorNorm(vector)):
         obstacles.append([x, y])
   return obstacles
 
@@ -129,6 +129,9 @@ def solveQuadratic(c, b, a):
 def getObstacle(obstacles, current_position, new_position, obstacle_radius = 1.0, return_on_obstacle = False):
   obstacles_in_the_way = []
   for obstacle in obstacles:
+    if getVectorNorm(getVector(current_position, obstacle)) <= obstacle_radius:
+      print("Point inside obstacle", current_position, obstacle)
+      exit(1)
     cx = obstacle[X]
     cy = obstacle[Y]
     ax = current_position[X]
@@ -144,15 +147,16 @@ def getObstacle(obstacles, current_position, new_position, obstacle_radius = 1.0
     b = 2.0*(ax*(bx - ax) + ay*(by - ay))
     c = (bx - ax)**2.0 + (by - ay)**2.0
     t = solveQuadratic(a,b,c)
-    print("Cur, New, obstacle, radius:", current_position, new_position, obstacle, obstacle_radius)
-    print("a,b,c,t:", a,b,c,t)
-    print()
 
     if not t:
       continue
 
     if (t[0] and 0.0 < t[0] and t[0] < 1.0) or (t[1] and 0.0 < t[1] and t[1] < 1.0):
         obstacles_in_the_way.append(obstacle)
+        print("Cur, New, obstacle, radius:", current_position, new_position, obstacle, obstacle_radius)
+        print("a,b,c,t:", a,b,c,t)
+        print()
+
         if return_on_obstacle:
           break
   #print(len(obstacles_in_the_way))
@@ -361,8 +365,8 @@ B = [15.6, 2.5]
 r = 1.0
 #draw.drawCircle(C[X], C[Y], [0,0,0], r)
 #draw.drawLine(A, B)
-if hasObstacle([C], A, B, r):
-  raise Exception("Interior failed")
+#if hasObstacle([C], A, B, r):
+#  raise Exception("Interior failed")
 
 C = [15.0, 3.0]
 A = [2.0, 2.0]
