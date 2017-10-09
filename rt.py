@@ -70,24 +70,11 @@ def generateSpace(XDIM, YDIM, draw = None):
   space[8][8] = 1
   return space
 
-def getDotProduct(vector1, vector2):
-  return vector1[X] * vector2[X] + vector1[Y] * vector2[Y]
-
-def getScalarProjection(vector1, vector2):
-  vector2_norm = getVectorNorm(vector2)
-  normalized_vector2 = [vector2[0]/vector2_norm, vector2[1]/vector2_norm]
-  return getDotProduct(vector1, normalized_vector2)
-
 def getScalarProduct(a, v1):
   return [a * v1[X], a * v1[Y]]
 
 def getProjectedPoint(p, v):
   return [p[X] + v[X], p[Y] + v[Y]]
-
-def getVectorProjection(vector1, vector2):
-  a_dot_b = getDotProduct(vector1, vector2)
-  b_dot_b = getDotProduct(vector2, vector2)
-  return getScalarProduct(a_dot_b / b_dot_b, vector2)
 
 def getVectorNorm(v):
   return math.sqrt(getSquaredLength(v))
@@ -125,7 +112,6 @@ def solveQuadratic(c, b, a):
       x2 = (-b + disc) / (2.0 *a)
   return [x1, x2]
 
-#https://stackoverflow.com/a/1079478/227990
 def getObstacle(obstacles, current_position, new_position, obstacle_radius = 1.0, return_on_obstacle = False):
   obstacles_in_the_way = []
   for obstacle in obstacles:
@@ -333,10 +319,6 @@ def algorithm6(x_0, x_goal):
     x = x[PARENT]
 
 draw = Draw()
-if getVectorProjection([3.0, -8.0], [1.0, 2.0]) != [-2.6, -5.2]:
-  raise Exception("Projection test failed")
-
-
 
 #if hasObstacle([[15.0, 0]], [3.0, 1.0], [15.0, 0.5], 0.4):
 #  raise Exception("Tangent failed")
@@ -400,8 +382,6 @@ x_0[PARENT] = None
 
 X_SI = NodeGrid()
 X_SI.addNodeToGrid(x_0)
-
-obstacles = getObstaclesInRange(getVector(x_0[POSITION], x_goal[POSITION]), x_0[POSITION], space)
 
 draw.drawCircle(START_POSITION[X], START_POSITION[Y], [0,1.0,1])
 draw.drawCircle(END_POSITION[X], END_POSITION[Y], [0,1.0,0.9])
