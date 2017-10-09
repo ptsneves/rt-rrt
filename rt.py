@@ -290,17 +290,6 @@ def algorithm2(space, x_0, x_goal, X_SI, qr, qs, k_max, rs, draw = None):
       X_SI.addNodeToGrid(x_rand)
       addNodeToTree(obstacles, x_rand, x_closest, X_near)
 
-
-      global i
-      #global draw
-
-      draw.drawLine(x_rand[PARENT][POSITION], x_rand[POSITION], [0,1.0,0])
-      #print("Sample " + str(sample_position))
-      i += 1
-      #if i == 20:
-      #  exit(1)
-
-
       printNode(x_rand)
       if draw:
         draw.drawNodes(x_rand[PARENT], x_rand)
@@ -312,9 +301,11 @@ def algorithm2(space, x_0, x_goal, X_SI, qr, qs, k_max, rs, draw = None):
     rewireFromRoot(obstacles, x_0, qs, X_SI)
   return new_node
 
-def algorithm6(x_0, x_goal):
+def algorithm6(x_0, x_goal, draw = None):
   x = x_goal
-  while x[PARENT] != []:
+  while x[PARENT]:
+    if draw and x[PARENT]:
+      draw.drawLine(x[POSITION], x[PARENT][POSITION])
     print(x[PARENT])
     x = x[PARENT]
 
@@ -390,7 +381,8 @@ draw.drawCircle(END_POSITION[X], END_POSITION[Y], [0,1.0,0.9])
 x = x_0
 printNode(x)
 while getNodeDistance(x, x_goal) >= 0.6:
-  x = algorithm2(space, x, x_goal, X_SI, [], [], 10.0, 10.0, draw)
+#  x = algorithm2(space, x, x_goal, X_SI, [], [], 10.0, 10.0, draw)
+   x = algorithm2(space, x, x_goal, X_SI, [], [], 10.0, 10.0, None)
 
 print("Reached")
-#algorithm6(x_0, x)
+algorithm6(x_0, x, draw)
