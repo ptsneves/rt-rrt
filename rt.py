@@ -298,7 +298,8 @@ def algorithm2(space, x_0, x_goal, X_SI, qr, qs, k_max, rs, draw = None):
     else:
       qr.insert(0, x_closest[NODE])
     rewireRandomNode(obstacles, qr, X_SI)
-    rewireFromRoot(obstacles, x_0, qs, X_SI)
+
+  rewireFromRoot(obstacles, x_0, qs, X_SI)
   return new_node
 
 def algorithm6(x_0, x_goal, draw = None):
