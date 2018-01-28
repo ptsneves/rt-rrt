@@ -302,12 +302,30 @@ def algorithm2(space, x_0, x_goal, X_SI, qr, qs, k_max, rs, draw = None):
   rewireFromRoot(obstacles, x_0, qs, X_SI)
   return new_node
 
-def algorithm6(x_0, x_goal, draw = None):
+def optimizePath(space, x_0, x_goal):
   x = x_goal
   while x[PARENT]:
-    if draw and x[PARENT]:
-      draw.drawLine(x[POSITION], x[PARENT][POSITION])
-    print(x[PARENT])
+    x_try = x[PARENT]
+    best_parent_node = x_try
+    best_cost = getNodeDistance(x_0, x_try)
+    while x_try:
+      obstacles = getObstaclesInRange(getVector(x[POSITION], x_try[POSITION]), x[POSITION], space)
+      if not hasObstacle(obstacles, x[POSITION], x_try[POSITION]):
+        current_cost = getNodeDistance(x_0, x_try)
+        if current_cost < best_cost:
+          best_parent_node = x_try
+          best_cost = current_cost
+      x_try = x_try[PARENT]
+
+    x[PARENT] = best_parent_node
+    x = best_parent_node
+
+  return x_goal
+
+def drawRoute(x_goal, color = [0, 255, 0]):
+  x = x_goal
+  while x[PARENT]:
+    draw.drawLine(x[POSITION], x[PARENT][POSITION], color)
     x = x[PARENT]
 
 draw = Draw()
@@ -386,4 +404,8 @@ while getNodeDistance(x, x_goal) >= 0.6:
    x = algorithm2(space, x, x_goal, X_SI, [], [], 10.0, 10.0, None)
 
 print("Reached")
-algorithm6(x_0, x, draw)
+
+drawRoute(x)
+x = optimizePath(space, x_0, x)
+drawRoute(x, [0, 0, 0])
+print(x)
