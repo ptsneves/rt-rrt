@@ -113,6 +113,7 @@ def solveQuadratic(c, b, a):
   return [x1, x2]
 
 def getObstacle(obstacles, current_position, new_position, obstacle_radius = 1.0, return_on_obstacle = False):
+
   obstacles_in_the_way = []
   for obstacle in obstacles:
     if getVectorNorm(getVector(current_position, obstacle)) <= obstacle_radius:
@@ -157,7 +158,6 @@ def getLineTo(a, b):
 def getUniform(start, end):
     return random.uniform(0, 20)
 
-i = 0
 def getSamplePosition(x_0, x_goal, a = 0.1, b = 0.5):
   current_position = x_0[POSITION]
   goal = x_goal[POSITION]
