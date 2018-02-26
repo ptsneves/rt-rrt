@@ -24,15 +24,26 @@ END_POSITION = [15.0, 15.0]
 
 class Draw:
   SCALE = 20.0
+  narrow_line_width = 0.05
+  line_width = 0.1
+
   def __init__(self):
     self.surface = cairo.SVGSurface("output.svg", XDIM * Draw.SCALE, YDIM * Draw.SCALE)
     self.ctx = cairo.Context(self.surface)
     self.ctx.set_source_rgb(0,0,0)
-    self.ctx.set_line_width(0.1)
+    self.ctx.set_line_width(self.line_width)
     self.ctx.scale(Draw.SCALE, Draw.SCALE)
 
   def drawLine(self, p1, p2 = [0.0, 0.0], color = [0,0,0]):
     self.ctx.set_source_rgb(color[0], color[1], color[2])
+    self.ctx.set_line_width(self.line_width)
+    self.ctx.move_to(p1[X], p1[Y])
+    self.ctx.line_to(p2[X], p2[Y])
+    self.ctx.stroke()
+
+  def drawNarrowLine(self, p1, p2 = [0.0, 0.0], color = [.7, .7, .7]):
+    self.ctx.set_source_rgb(color[0], color[1], color[2])
+    self.ctx.set_line_width(self.narrow_line_width)
     self.ctx.move_to(p1[X], p1[Y])
     self.ctx.line_to(p2[X], p2[Y])
     self.ctx.stroke()
@@ -328,6 +339,12 @@ def drawRoute(x_goal, color = [0, 255, 0]):
     draw.drawLine(x[POSITION], x[PARENT][POSITION], color)
     x = x[PARENT]
 
+def drawTree(grid, draw):
+  for grid_element in grid.grid_elements:
+    for node in grid_element.nodes:
+      if node[PARENT]:
+        draw.drawNarrowLine(node[POSITION], node[PARENT][POSITION])
+
 draw = Draw()
 
 #if hasObstacle([[15.0, 0]], [3.0, 1.0], [15.0, 0.5], 0.4):
@@ -405,6 +422,7 @@ while getNodeDistance(x, x_goal) >= 0.6:
 
 print("Reached")
 
+drawTree(X_SI, draw)
 drawRoute(x)
 x = optimizePath(space, x_0, x)
 drawRoute(x, [0, 0, 0])
