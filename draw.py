@@ -8,6 +8,7 @@ class Draw:
     narrow_line_width = 0.05
     line_width = 0.1
     BLACK = [0, 0, 0]
+    _CENTER_OFFSET = 0.5
 
     def __init__(self, x_dimension, y_dimension):
         self.x_dimension = x_dimension
@@ -21,15 +22,15 @@ class Draw:
     def line(self, p1, p2, color):
         self.ctx.set_source_rgb(color[0], color[1], color[2])
         self.ctx.set_line_width(self.line_width)
-        self.ctx.move_to(p1.x(), p1.y())
-        self.ctx.line_to(p2.x(), p2.y())
+        self.ctx.move_to(p1.x() + Draw._CENTER_OFFSET, p1.y() + Draw._CENTER_OFFSET)
+        self.ctx.line_to(p2.x() + Draw._CENTER_OFFSET, p2.y() + Draw._CENTER_OFFSET)
         self.ctx.stroke()
 
     def narrowLine(self, p1, p2, color):
         self.ctx.set_source_rgb(color[0], color[1], color[2])
         self.ctx.set_line_width(self.narrow_line_width)
-        self.ctx.move_to(p1.x(), p1.y())
-        self.ctx.line_to(p2.x(), p2.y())
+        self.ctx.move_to(p1.x() + Draw._CENTER_OFFSET, p1.y() + Draw._CENTER_OFFSET)
+        self.ctx.line_to(p2.x() + Draw._CENTER_OFFSET, p2.y() + Draw._CENTER_OFFSET)
         self.ctx.stroke()
 
     def nodes(self, node1, node2):
@@ -37,15 +38,15 @@ class Draw:
         self.line(node1.position(), node2.position(), Draw.BLACK)
 
     def obstacle(self, x, y):
-        self.ctx.set_source_rgb(1.0, 0, 0)
-        self.ctx.move_to(x, y)
-        self.ctx.arc(x, y, 0.6, -math.pi, math.pi)
-        self.ctx.stroke()
+        self.circle(x, y, [1.0, 0, 0], Draw._CENTER_OFFSET)
+
 
     def circle(self, x, y, color, radius=1.0):
         self.ctx.set_source_rgb(color[0], color[1], color[2])
-        self.ctx.move_to(x, y)
-        self.ctx.arc(x, y, radius, -math.pi, math.pi)
+        self.ctx.move_to(x + radius, y + radius)
+        self.ctx.new_path()  # required to remove a centerline in the circle
+        self.ctx.arc(x + radius, y + radius, radius, 0, 2 * math.pi)
+        self.ctx.close_path()
         self.ctx.stroke()
 
     def walls(self, x, y):
