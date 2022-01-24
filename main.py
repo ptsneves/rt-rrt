@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import sys
-from random import randint
 
 import math_utils
 import node
@@ -64,7 +63,7 @@ def main():
 
     draw = Draw(grid_width, grid_height)
     space = world_map.WorldMap([pos_0, pos_goal], grid_width, grid_height)
-    space.drawWorld(draw.obstacle, draw.walls)
+    space.drawWorld(draw.obstacle, draw.walls, draw.start_end)
 
     # draw.line([5.0, 5.0], [6.0, 5.0], [0, 0, 1])
 

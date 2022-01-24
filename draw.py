@@ -40,6 +40,8 @@ class Draw:
     def obstacle(self, x, y):
         self.circle(x, y, [1.0, 0, 0], Draw._CENTER_OFFSET)
 
+    def start_end(self, x, y):
+        self.circle(x, y, [0, 0, 40], Draw._CENTER_OFFSET)
 
     def circle(self, x, y, color, radius=1.0):
         self.ctx.set_source_rgb(color[0], color[1], color[2])

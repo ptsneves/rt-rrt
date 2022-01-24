@@ -7,6 +7,7 @@ class WorldMap:
     _EmptyMarker = 0
     _ObstacleMarker = 1
     _WallMarker = 2
+    _ReservedMarker = 3
 
     def __init__(self, reserved_positions, width, height):
         self._width = width
@@ -19,7 +20,9 @@ class WorldMap:
                 is_reserved_pos = any([pos for pos in reserved_positions if pos.equalInt(cur_point)])
                 if self.isVerticalWall(cur_point) or self.isHorizontalWall(cur_point):
                     self._space[x][y] = WorldMap._WallMarker
-                elif not is_reserved_pos and self.isRandomObstacle():
+                elif is_reserved_pos:
+                    self._space[x][y] = WorldMap._ReservedMarker
+                elif self.isRandomObstacle():
                     self._space[x][y] = WorldMap._ObstacleMarker
 
 
@@ -37,14 +40,16 @@ class WorldMap:
         obstacles = []
         for x in range(0, self._width):
             for y in range(0, self._height):
-                if self._space[x][y] != WorldMap._EmptyMarker:  # and (all or vectorNorm(getVector(origin, [x, y])) < vectorNorm(vector)):
+                if self._space[x][y] in [WorldMap._WallMarker, WorldMap._ObstacleMarker]:  # and (all or vectorNorm(getVector(origin, [x, y])) < vectorNorm(vector)):
                     obstacles.append(math_utils.Point(x, y))
         return obstacles
 
-    def drawWorld(self, obstacle_callback, wall_callback):
+    def drawWorld(self, obstacle_callback, wall_callback, reserved_callback):
         for x in range(0, self._width):
             for y in range(0, self._height):
                 if self._space[x][y] == WorldMap._ObstacleMarker:
                     obstacle_callback(x, y)
                 elif self._space[x][y] == WorldMap._WallMarker:
                     wall_callback(x, y)
+                elif self._space[x][y] == WorldMap._ReservedMarker:
+                    reserved_callback(x, y)
