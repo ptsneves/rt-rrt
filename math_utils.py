@@ -27,6 +27,7 @@ class Point:
     def projectedPoint(self, v):
         return Point(self.x() + v.x(), self.y() + v.y())
 
+
 class Vector:
     def __init__(self, x, y):
         self._x = x

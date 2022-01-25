@@ -85,6 +85,7 @@ def main():
 
     draw.tree(clusters)
     draw.route(x)
+    draw.legend()
     x = rt.optimizePath(space, x_0, x)
     draw.route(x, [0, 0, 0])
     return 0
